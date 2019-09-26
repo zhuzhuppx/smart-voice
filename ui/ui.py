@@ -3,6 +3,7 @@ import sys
 sys.path.append(r'./package/')
 import do
 import json
+
 from tkinter.filedialog import askdirectory
 from tkinter import *
 import tkinter.messagebox  # 要使用messagebox先要导入模块
@@ -94,4 +95,3 @@ def initWindow():
         jsTxt = json.dumps(jsonT, indent=4, ensure_ascii=False)
         setRTxt(t, jsTxt)
         window.mainloop()
-initWindow()
