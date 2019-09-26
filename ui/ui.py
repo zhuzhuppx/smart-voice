@@ -94,3 +94,4 @@ def initWindow():
         jsTxt = json.dumps(jsonT, indent=4, ensure_ascii=False)
         setRTxt(t, jsTxt)
         window.mainloop()
+initWindow()
