@@ -1,0 +1,1 @@
+pyinstaller -F -w -i dancer.ico main.py
