@@ -3,8 +3,8 @@
 block_cipher = None
 
 
-a = Analysis(['main.py'],
-             pathex=['e:\\zhuzhucode\\tts'],
+a = Analysis(['CPMS话术小助手.py'],
+             pathex=['F:\\workspace\\voice\\smart-voice'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -23,7 +23,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='main',
+          name='CPMS话术小助手',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
