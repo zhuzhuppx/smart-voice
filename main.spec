@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['E:\\zhuzhucode\\tts'],
+             pathex=['e:\\zhuzhucode\\tts'],
              binaries=[],
              datas=[],
              hiddenimports=[],
