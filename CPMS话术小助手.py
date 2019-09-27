@@ -11,11 +11,59 @@ from ali_speech.constant import TTSFormat
 from ali_speech.constant import TTSSampleRate
 
 from tkinter.filedialog import askdirectory
+from tkinter.filedialog import askopenfilename
 from tkinter import *
 import tkinter.messagebox  # 要使用messagebox先要导入模块
 from tkinter.scrolledtext import ScrolledText
 from tkinter import INSERT
 from tkinter import END
+from docx import Document
+# -*- coding: utf8 -*-
+from aliyunsdkcore.client import AcsClient
+from aliyunsdkcore.request import CommonRequest
+def getToken():
+        # 创建AcsClient实例
+    client = AcsClient(
+    "LTAI4Fgat3CA8k39ofbrEuoW",
+    "gKBnGKPPvI6WWV4KJkAEFCbGuTPTV1",
+    "cn-shanghai"
+    );
+    # 创建request，并设置参数
+    request = CommonRequest()
+    request.set_method('POST')
+    request.set_domain('nls-meta.cn-shanghai.aliyuncs.com')
+    request.set_version('2019-02-28')
+    request.set_action_name('CreateToken')
+    response = client.do_action_with_exception(request)    
+    token = json.loads(response)
+    return token['Token']['Id']
+
+def handleTable(t):
+    jsonlist = []
+    for i, row in enumerate(t.rows):
+        row_content = []
+        j = 0
+        obj = {}
+        for cell in row.cells:
+            c = cell.text
+            c = c.replace('\n','')
+            if j == 0:
+                obj['name'] = c
+            if j == 1:
+                obj['text'] = c
+            j = j+1
+        jsonlist.append(obj)
+    return json.dumps(jsonlist, indent=4, ensure_ascii=False)
+
+
+def doParseWord(file):
+    f = open(file, 'rb')
+    document = Document(f)
+    str = ''
+    for t in document.tables:
+        str = handleTable(t)
+    f.close()
+    return str;
 class MyCallback(SpeechSynthesizerCallback):
     # 参数name用于指定保存音频的文件
     def __init__(self, name):
@@ -43,8 +91,8 @@ def process(client, appkey, token, text, audio_name):
     synthesizer.set_format(TTSFormat.WAV)
     synthesizer.set_sample_rate(TTSSampleRate.SAMPLE_RATE_16K)
     synthesizer.set_volume(50)
-    synthesizer.set_speech_rate(0)
-    synthesizer.set_pitch_rate(0)
+    synthesizer.set_speech_rate(100)
+    synthesizer.set_pitch_rate(100)
     try:
         ret = synthesizer.start()
         if ret < 0:
@@ -77,10 +125,11 @@ def toVoice(appkey,token,text,audio_name):
 def getConfig():
     return {
         "appkey": 'TXH74wgv56oGoFFF',
-        "token": '97c5f8ab3f2a4b7c91804ec9605d5c3e'
+        "token": getToken()
     }
 
 cf = getConfig()
+print(cf)
 appkey = cf['appkey']
 token = cf['token']
 
@@ -92,7 +141,9 @@ def changeVoice(load_dict,voiceDir,file):
         else: 
             os.makedirs(dir)                   
         for item in load_dict:   
-             toVoice(appkey,token,item['text'],dir+item['name']+'.wav')
+            print(item['name'])
+            print(item['text'])
+            toVoice(appkey,token,item['text'],dir+item['name']+'.wav')
 
 
 
@@ -134,17 +185,26 @@ def initWindow():
             path_ = askdirectory()
             path.set(path_)
             voiceDir = path_
+        def selectWord():
+            path_ = askopenfilename()
+            wordPath.set(path_)
+            jsTxt = doParseWord(path_)           
+            setRTxt(t, jsTxt)
         frmUp = Frame()
-        Label(frmUp, text="话术名称").grid(row=0, column=1)
+        wordPath = StringVar()
+        Label(frmUp, text="word路径:").grid(row=0, column=1)
+        Entry(frmUp, textvariable=wordPath).grid(row=0, column=2)
+        Button(frmUp, text="选择word", command=selectWord).grid(row=0, column=3)
+        Label(frmUp, text="话术名称").grid(row=0, column=4)        
         projectName = StringVar()
-        Entry(frmUp, textvariable=projectName).grid(row=0, column=2)
+        Entry(frmUp, textvariable=projectName).grid(row=0, column=5)
         path = StringVar()
         path.set(voiceDir)
-        Label(frmUp, text="语音路径:").grid(row=0, column=3)
-        Entry(frmUp, textvariable=path).grid(row=0, column=4)
-        Button(frmUp, text="路径选择", command=selectPath).grid(row=0, column=5)
+        Label(frmUp, text="语音路径:").grid(row=0, column=6)
+        Entry(frmUp, textvariable=path).grid(row=0, column=7)
+        Button(frmUp, text="路径选择", command=selectPath).grid(row=0, column=8)
         Button(frmUp, text='点我合成语音', bg='green', font=(
-            'Arial', 14), command=hit_me).grid(row=0, column=6)
+            'Arial', 14), command=hit_me).grid(row=0, column=9)
         frmUp.grid(row=0, column=0, padx=1, pady=3)
         frmDown = Frame()
         frmDown.grid(row=1, column=0, padx=1, pady=3)
