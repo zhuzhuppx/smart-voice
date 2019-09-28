@@ -29,8 +29,10 @@ akSecret = 'gKBnGKPPvI6WWV4KJkAEFCbGuTPTV1'
 savePath = 'c:\\voice'
 # aixia,xiaowei,sicheng
 person = 'aixia'
-
-
+alToken = ''
+client = ali_speech.NlsClient()
+# 设置输出日志信息的级别：DEBUG、INFO、WARNING、ERROR
+client.set_log_level('INFO')
 def getToken():
         # 创建AcsClient实例
     client = AcsClient(
@@ -47,37 +49,42 @@ def getToken():
     response = client.do_action_with_exception(request)
     token = json.loads(response)
     return token['Token']['Id']
+alToken = getToken()
 def updateProcess(txt):
        print(txt)
-       currentProcess.insert(INSERT, txt+'\n')
+       ts = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+       currentProcess.insert(INSERT, ts+':'+txt+'\n')
        currentProcess.see(END)
 
 
 class MyCallback(SpeechSynthesizerCallback):
         # 参数name用于指定保存音频的文件
-    def __init__(self, name):
+    def __init__(self, name,text):
         self._name = name
+        self._text = text
         self._fout = open(name, 'wb')
 
     def on_binary_data_received(self, raw):      
-        updateProcess('MyCallback.on_binary_data_received: %s' % len(raw))
+        updateProcess('%s is recorded:%s'%(self._name,len(raw)))
         self._fout.write(raw)
 
     def on_completed(self, message):
-        updateProcess('MyCallback.OnRecognitionCompleted: %s' % message)
+        updateProcess('txt is recorded:%s'%(self._text))
         self._fout.close()
 
     def on_task_failed(self, message):    
-        updateProcess('MyCallback.OnRecognitionTaskFailed-task_id:%s, status_text:%s' % (
+        updateProcess('text :%s,record failed:%s, status_text:%s' % (self._name,
             message['header']['task_id'], message['header']['status_text']))
+        
         self._fout.close()
 
     def on_channel_closed(self):
-        updateProcess('MyCallback.OnRecognitionChannelClosed')
+        # updateProcess('MyCallback.OnRecognitionChannelClosed')
+        print('MyCallback.OnRecognitionChannelClosed')
 
 
 def process(client, appkey, token, text, audio_name, voice='aixia'):
-    callback = MyCallback(audio_name)
+    callback = MyCallback(audio_name,text)
     synthesizer = client.create_synthesizer(callback)
     synthesizer.set_appkey(appkey)
     synthesizer.set_token(token)
@@ -99,54 +106,34 @@ def process(client, appkey, token, text, audio_name, voice='aixia'):
     finally:
         synthesizer.close()
 
-
-def process_multithread(client, appkey, token, text, audio_name, voice):
-    thread_list = []
-    for i in range(0, 5):
-        thread = threading.Thread(target=process, args=(
-            client, appkey, token, text, audio_name, voice))
-        thread_list.append(thread)
-        thread.start()
-    for thread in thread_list:
-        thread.join()
-
-
 def toVoice(appkey, token, text, audio_name, voice):
-    client = ali_speech.NlsClient()
-    # 设置输出日志信息的级别：DEBUG、INFO、WARNING、ERROR
-    client.set_log_level('INFO')
-    process_multithread(client, appkey, token, text, audio_name, voice)
-
+    process(client, appkey, token, text, audio_name, voice)
 
 def changeVoice(load_dict, voiceDir, file, voice):
     dir = voiceDir+'/'+file+'/'
     if os.path.exists(dir):
-        print('exists dir%s' % (dir))
+        msg = 'exists dir%s' % (dir)
+        updateProcess(msg)
     else:
         os.makedirs(dir)
     for item in load_dict:        
-        toVoice(appkey, getToken(), item['text'],
+        toVoice(appkey, alToken, item['text'],
                 dir+item['name']+'.wav', voice)
 
 
 def textToVoice(load_dict, savePath, voiceName, person):
-    print('start...')
     updateProcess('start textToVoice:%s' % (voiceName))
     try:
         changeVoice(load_dict, savePath,
                     voiceName, person)
         successTxt = '语音生成成功！语音文件保存路径--->%s\%s' % (
             savePath, voiceName)
-        print(successTxt)
         updateProcess(successTxt)
     except Exception as ex:
         extxt = "您的数据格式有误！%s" % (ex)
-        print(extxt)
         updateProcess(extxt)
 
 # 解析word中的表格
-
-
 def handleTable(t):
     jsonlist = []
     for i, row in enumerate(t.rows):
