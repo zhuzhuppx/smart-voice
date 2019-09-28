@@ -20,7 +20,6 @@ from tkinter import *
 from tkinter import ttk
 import tkinter.messagebox  # 要使用messagebox先要导入模块
 import time
-wordPath = 'C:\\Users\\ppx\\Desktop\\testword'
 appkey = 'tQzL0nTf2p73E1Mi'
 akID = 'LTAI4Fgat3CA8k39ofbrEuoW'
 akSecret = 'gKBnGKPPvI6WWV4KJkAEFCbGuTPTV1'
@@ -158,7 +157,7 @@ def handleTable(t):
 # 解析word
 
 
-def parseWord(file):
+def parseWord(file, voicePath, person):
     f = open(file, 'rb')
     document = Document(f)
     list = []
@@ -168,7 +167,7 @@ def parseWord(file):
     f.close()
     voiceName = os.path.basename(file)
     voiceName = voiceName.replace('.docx', '')
-    textToVoice(list, savePath, voiceName, person)
+    textToVoice(list, voicePath, voiceName, person)
 
 
 def cbk(a, b, c):
@@ -183,14 +182,21 @@ def cbk(a, b, c):
     print('%.2f%%' % per)
 
 
-def downloadfile(url, name):
-    dir = os.path.abspath(wordPath)
+def downloadfile(url, name, voicePath, person):
+    wordName = name.replace('.docx', '')
+    dir = os.path.abspath(voicePath+'/'+wordName)
+    if os.path.exists(dir):
+        print('exists dir%s' % (dir))
+    else:
+        os.makedirs(dir)
     work_path = os.path.join(dir, name)
+    print(work_path)
     filename, info = urlretrieve(url, work_path, cbk)
-    parseWord(filename)
+    parseWord(filename, voicePath, person)
 
 
-def parseExcel(file):
+def parseExcel(file, voicePath, person):
+    print(voicePath)
     workbook = open_workbook(file)
     sheet_names = workbook.sheet_names()
     sheets_object = workbook.sheets()
@@ -205,32 +211,23 @@ def parseExcel(file):
         # task_id = sheet1_object.cell_value(rowx=r, colx=0)
         # project_id = sheet1_object.cell_value(rowx=r, colx=0)
         print('%s,%s,%s' % (project_name, order_name, file_url))
-        downloadfile(file_url, '%s-%s.docx' % (project_name, order_name))
-
+        downloadfile(file_url, '%s-%s.docx' %
+                     (project_name, order_name), voicePath, person)
 
 
 def hitMe():
     if len(listPath.get()) == 0:
         tkinter.messagebox.showinfo(title='Hi', message='请输入话术列表文件')
     else:
-        if len(wordSavePath.get()) == 0:
-            tkinter.messagebox.showinfo(title='Hi', message='请选择话术word所在路径')
+        if len(voiceSavePath.get()) == 0:
+            tkinter.messagebox.showinfo(title='Hi', message='请选择语音保存路径')
         else:
-            if len(voiceSavePath.get()) == 0:
-                tkinter.messagebox.showinfo(title='Hi', message='请选择语音保存路径')
-            else:
-                parseExcel(listPath.get());
+            parseExcel(listPath.get(), voiceSavePath.get(), comvalue.get())
 
 
 def selectListFile():
     path_ = askopenfilename()
     listPath.set(path_)
-
-
-def selectWord():
-    path_ = askdirectory()
-    wordSavePath.set(path_)
-    wordPath = path_;
 
 
 def selectVoicePath():
@@ -240,7 +237,7 @@ def selectVoicePath():
 
 
 root = tk.Tk()
-width = 1024
+width = 600
 height = 200
 root.title('CPMS话术转换小助手')
 root.geometry('%sx%s' % (width, height))
@@ -249,23 +246,18 @@ listPath = StringVar()
 Label(frmUp, text="话术列表:").grid(row=0, column=1)
 Entry(frmUp, textvariable=listPath).grid(row=0, column=2)
 Button(frmUp, text="选择话术excel", command=selectListFile).grid(row=0, column=3)
-wordSavePath = StringVar()
-wordSavePath.set(wordPath)
-Label(frmUp, text="word路径:").grid(row=0, column=4)
-Entry(frmUp, textvariable=wordSavePath).grid(row=0, column=5)
-Button(frmUp, text="选择word", command=selectWord).grid(row=0, column=6)
 voiceSavePath = StringVar()
 voiceSavePath.set(savePath)
-Label(frmUp, text="语音路径:").grid(row=0, column=7)
-Entry(frmUp, textvariable=voiceSavePath).grid(row=0, column=8)
-Button(frmUp, text="路径选择", command=selectVoicePath).grid(row=0, column=9)
+Label(frmUp, text="语音路径:").grid(row=0, column=4)
+Entry(frmUp, textvariable=voiceSavePath).grid(row=0, column=5)
+Button(frmUp, text="路径选择", command=selectVoicePath).grid(row=0, column=6)
 
 
 frmUp.grid(row=0, column=0, padx=1, pady=3)
 frmDown = Frame()
 Label(frmDown, text="选择声优:").grid(row=0, column=1)
-comvalue = StringVar()  
-comboxlist = ttk.Combobox(frmDown, textvariable=comvalue) 
+comvalue = StringVar()
+comboxlist = ttk.Combobox(frmDown, textvariable=comvalue)
 comboxlist["values"] = ("aixia", "sicheng")
 comboxlist.current(0)  # 选择第一个
 comboxlist.grid(row=0, column=2)
@@ -280,6 +272,3 @@ canvas = tk.Canvas(frmProcess, width=465, height=22, bg="white")
 frmDown.grid(row=2, column=0, padx=1, pady=3)
 
 root.mainloop()
-
-
-
