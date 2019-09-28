@@ -18,6 +18,9 @@ from tkinter.filedialog import askdirectory
 from tkinter.filedialog import askopenfilename
 from tkinter import *
 from tkinter import ttk
+from tkinter.scrolledtext import ScrolledText
+from tkinter import INSERT
+from tkinter import END
 import tkinter.messagebox  # 要使用messagebox先要导入模块
 import time
 appkey = 'tQzL0nTf2p73E1Mi'
@@ -44,6 +47,10 @@ def getToken():
     response = client.do_action_with_exception(request)
     token = json.loads(response)
     return token['Token']['Id']
+def updateProcess(txt):
+       print(txt)
+       currentProcess.insert(INSERT, txt+'\n')
+       currentProcess.see(END)
 
 
 class MyCallback(SpeechSynthesizerCallback):
@@ -52,21 +59,21 @@ class MyCallback(SpeechSynthesizerCallback):
         self._name = name
         self._fout = open(name, 'wb')
 
-    def on_binary_data_received(self, raw):
-        print('MyCallback.on_binary_data_received: %s' % len(raw))
+    def on_binary_data_received(self, raw):      
+        updateProcess('MyCallback.on_binary_data_received: %s' % len(raw))
         self._fout.write(raw)
 
     def on_completed(self, message):
-        print('MyCallback.OnRecognitionCompleted: %s' % message)
+        updateProcess('MyCallback.OnRecognitionCompleted: %s' % message)
         self._fout.close()
 
-    def on_task_failed(self, message):
-        print('MyCallback.OnRecognitionTaskFailed-task_id:%s, status_text:%s' % (
+    def on_task_failed(self, message):    
+        updateProcess('MyCallback.OnRecognitionTaskFailed-task_id:%s, status_text:%s' % (
             message['header']['task_id'], message['header']['status_text']))
         self._fout.close()
 
     def on_channel_closed(self):
-        print('MyCallback.OnRecognitionChannelClosed')
+        updateProcess('MyCallback.OnRecognitionChannelClosed')
 
 
 def process(client, appkey, token, text, audio_name, voice='aixia'):
@@ -88,7 +95,7 @@ def process(client, appkey, token, text, audio_name, voice='aixia'):
             return ret
         synthesizer.wait_completed()
     except Exception as e:
-        print(e)
+        updateProcess(e)
     finally:
         synthesizer.close()
 
@@ -117,24 +124,26 @@ def changeVoice(load_dict, voiceDir, file, voice):
         print('exists dir%s' % (dir))
     else:
         os.makedirs(dir)
-    for item in load_dict:
-        print(item['name'])
-        print(item['text'])
+    for item in load_dict:        
         toVoice(appkey, getToken(), item['text'],
                 dir+item['name']+'.wav', voice)
 
 
 def textToVoice(load_dict, savePath, voiceName, person):
     print('start...')
+    updateProcess('start textToVoice:%s' % (voiceName))
     try:
         changeVoice(load_dict, savePath,
                     voiceName, person)
         successTxt = '语音生成成功！语音文件保存路径--->%s\%s' % (
             savePath, voiceName)
         print(successTxt)
+        updateProcess(successTxt)
     except Exception as ex:
         extxt = "您的数据格式有误！%s" % (ex)
         print(extxt)
+        updateProcess(extxt)
+
 # 解析word中的表格
 
 
@@ -158,6 +167,7 @@ def handleTable(t):
 
 
 def parseWord(file, voicePath, person):
+    updateProcess('parseing file :%s' % (file))
     f = open(file, 'rb')
     document = Document(f)
     list = []
@@ -179,7 +189,7 @@ def cbk(a, b, c):
     per = 100.0*a*b/c
     if per >= 100:
         per = 100
-    print('%.2f%%' % per)
+        updateProcess('文件已下载：%.2f%%' % per)
 
 
 def downloadfile(url, name, voicePath, person):
@@ -187,11 +197,13 @@ def downloadfile(url, name, voicePath, person):
     dir = os.path.abspath(voicePath+'/'+wordName)
     if os.path.exists(dir):
         print('exists dir%s' % (dir))
+        updateProcess('exists dir%s' % (dir))
     else:
         os.makedirs(dir)
     work_path = os.path.join(dir, name)
-    print(work_path)
+    updateProcess('work_path dir%s' % (work_path))
     filename, info = urlretrieve(url, work_path, cbk)
+    updateProcess('downloaded file :%s' % (filename))
     parseWord(filename, voicePath, person)
 
 
@@ -208,9 +220,7 @@ def parseExcel(file, voicePath, person):
         project_name = sheet1_object.cell_value(rowx=r, colx=1)
         order_name = sheet1_object.cell_value(rowx=r, colx=2)
         file_url = sheet1_object.cell_value(rowx=r, colx=3)
-        # task_id = sheet1_object.cell_value(rowx=r, colx=0)
-        # project_id = sheet1_object.cell_value(rowx=r, colx=0)
-        print('%s,%s,%s' % (project_name, order_name, file_url))
+        updateProcess('%s,%s,%s' % (project_name, order_name, file_url))
         downloadfile(file_url, '%s-%s.docx' %
                      (project_name, order_name), voicePath, person)
 
@@ -222,8 +232,10 @@ def hitMe():
         if len(voiceSavePath.get()) == 0:
             tkinter.messagebox.showinfo(title='Hi', message='请选择语音保存路径')
         else:
-            parseExcel(listPath.get(), voiceSavePath.get(), comvalue.get())
-
+            # parseExcel(listPath.get(), voiceSavePath.get(), comvalue.get())
+            th = threading.Thread(target=parseExcel,args=(listPath.get(), voiceSavePath.get(), comvalue.get()))
+            th.setDaemon(True)
+            th.start()
 
 def selectListFile():
     path_ = askopenfilename()
@@ -237,8 +249,8 @@ def selectVoicePath():
 
 
 root = tk.Tk()
-width = 600
-height = 200
+width = 1024
+height = 900
 root.title('CPMS话术转换小助手')
 root.geometry('%sx%s' % (width, height))
 frmUp = Frame()
@@ -266,9 +278,8 @@ Button(frmDown, text='点我合成语音', bg='green', font=(
 frmDown.grid(row=1, column=0, padx=1, pady=3)
 frmProcess = Frame()
 
-# 设置下载进度条
-tk.Label(frmProcess, text='下载进度:', ).grid(row=0, column=1)
-canvas = tk.Canvas(frmProcess, width=465, height=22, bg="white")
-frmDown.grid(row=2, column=0, padx=1, pady=3)
+currentProcess = ScrolledText(frmProcess, font=("隶书", 18))
+currentProcess.grid(row=2, column=0)
+frmProcess.grid(row=2, column=0, padx=1, pady=3)
 
 root.mainloop()
