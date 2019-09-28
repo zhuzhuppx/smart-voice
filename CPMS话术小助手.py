@@ -3,7 +3,6 @@
 import json
 import os
 from pathlib import Path
-# -*- coding: utf-8 -*-
 import threading
 import ali_speech
 from ali_speech.callbacks import SpeechSynthesizerCallback
@@ -204,6 +203,8 @@ def initWindow():
         wordPath.set(path_)
         jsTxt = doParseWord(path_)
         setRTxt(t, jsTxt)
+        wordName = os.path.basename(path_)
+        projectName.set(wordName.replace('.docx',''))
     frmUp = Frame()
     wordPath = StringVar()
     Label(frmUp, text="word路径:").grid(row=0, column=1)
