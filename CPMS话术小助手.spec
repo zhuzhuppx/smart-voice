@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['CPMS话术小助手.py'],
-             pathex=['F:\\workspace\\voice\\smart-voice'],
+             pathex=['E:\\zhuzhucode\\tts'],
              binaries=[],
              datas=[],
              hiddenimports=[],
