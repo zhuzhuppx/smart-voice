@@ -94,8 +94,8 @@ def process(client, appkey, token, text, audio_name, voice='aixia'):
     synthesizer.set_format(TTSFormat.WAV)
     synthesizer.set_sample_rate(TTSSampleRate.SAMPLE_RATE_8K)
     synthesizer.set_volume(90)
-    synthesizer.set_speech_rate(0)
-    synthesizer.set_pitch_rate(0)
+    synthesizer.set_speech_rate(-30)
+    synthesizer.set_pitch_rate(-10)
     try:
         ret = synthesizer.start()
         if ret < 0:
