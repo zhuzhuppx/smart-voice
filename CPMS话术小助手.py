@@ -53,14 +53,17 @@ def handleTable(t):
     jsonlist = []
     for i, row in enumerate(t.rows):
         row_content = []
-        j = 0
         obj = {}
+        lh = len(row.cells)
+        start = 1 if(lh == 4)else 0
+        j = 0
         for cell in row.cells:
             c = cell.text
             c = c.replace('\n', '')
-            if j == 0:
-                obj['name'] = c
-            if j == 1:
+            if j == start:
+                obj['name'] = c.replace('？', '').replace(
+                    '，', '').replace('。', '').replace('！', '')
+            if j == start+1:
                 obj['text'] = c
             j = j+1
         jsonlist.append(obj)
@@ -124,14 +127,17 @@ def process(client, appkey, token, text, audio_name, voice='aixia'):
     finally:
         synthesizer.close()
 
+
 def process_multithread(client, appkey, token, text, audio_name, voice):
     thread_list = []
-    for i in range(0, 5):     
-        thread = threading.Thread(target=process, args=(client, appkey, token, text, audio_name, voice))
+    for i in range(0, 5):
+        thread = threading.Thread(target=process, args=(
+            client, appkey, token, text, audio_name, voice))
         thread_list.append(thread)
         thread.start()
     for thread in thread_list:
         thread.join()
+
 
 def toVoice(appkey, token, text, audio_name, voice):
     client = ali_speech.NlsClient()
@@ -204,7 +210,7 @@ def initWindow():
         jsTxt = doParseWord(path_)
         setRTxt(t, jsTxt)
         wordName = os.path.basename(path_)
-        projectName.set(wordName.replace('.docx',''))
+        projectName.set(wordName.replace('.docx', ''))
     frmUp = Frame()
     wordPath = StringVar()
     Label(frmUp, text="word路径:").grid(row=0, column=1)

@@ -33,6 +33,8 @@ alToken = ''
 client = ali_speech.NlsClient()
 # 设置输出日志信息的级别：DEBUG、INFO、WARNING、ERROR
 client.set_log_level('INFO')
+
+
 def getToken():
         # 创建AcsClient实例
     client = AcsClient(
@@ -49,33 +51,37 @@ def getToken():
     response = client.do_action_with_exception(request)
     token = json.loads(response)
     return token['Token']['Id']
+
+
 alToken = getToken()
+
+
 def updateProcess(txt):
-       print(txt)
-       ts = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-       currentProcess.insert(INSERT, ts+':'+txt+'\n')
-       currentProcess.see(END)
+    print(txt)
+    ts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    currentProcess.insert(INSERT, ts+':'+txt+'\n')
+    currentProcess.see(END)
 
 
 class MyCallback(SpeechSynthesizerCallback):
         # 参数name用于指定保存音频的文件
-    def __init__(self, name,text):
+    def __init__(self, name, text):
         self._name = name
         self._text = text
         self._fout = open(name, 'wb')
 
-    def on_binary_data_received(self, raw):      
-        updateProcess('%s is recorded:%s'%(self._name,len(raw)))
+    def on_binary_data_received(self, raw):
+        updateProcess('%s is recorded:%s' % (self._name, len(raw)))
         self._fout.write(raw)
 
     def on_completed(self, message):
-        updateProcess('txt is recorded:%s'%(self._text))
+        updateProcess('txt is recorded:%s' % (self._text))
         self._fout.close()
 
-    def on_task_failed(self, message):    
+    def on_task_failed(self, message):
         updateProcess('text :%s,record failed:%s, status_text:%s' % (self._name,
-            message['header']['task_id'], message['header']['status_text']))
-        
+                                                                     message['header']['task_id'], message['header']['status_text']))
+
         self._fout.close()
 
     def on_channel_closed(self):
@@ -84,7 +90,7 @@ class MyCallback(SpeechSynthesizerCallback):
 
 
 def process(client, appkey, token, text, audio_name, voice='aixia'):
-    callback = MyCallback(audio_name,text)
+    callback = MyCallback(audio_name, text)
     synthesizer = client.create_synthesizer(callback)
     synthesizer.set_appkey(appkey)
     synthesizer.set_token(token)
@@ -106,8 +112,10 @@ def process(client, appkey, token, text, audio_name, voice='aixia'):
     finally:
         synthesizer.close()
 
+
 def toVoice(appkey, token, text, audio_name, voice):
     process(client, appkey, token, text, audio_name, voice)
+
 
 def changeVoice(load_dict, voiceDir, file, voice):
     dir = voiceDir+'/'+file+'/'
@@ -116,7 +124,7 @@ def changeVoice(load_dict, voiceDir, file, voice):
         updateProcess(msg)
     else:
         os.makedirs(dir)
-    for item in load_dict:        
+    for item in load_dict:
         toVoice(appkey, alToken, item['text'],
                 dir+item['name']+'.wav', voice)
 
@@ -134,18 +142,23 @@ def textToVoice(load_dict, savePath, voiceName, person):
         updateProcess(extxt)
 
 # 解析word中的表格
+
+
 def handleTable(t):
     jsonlist = []
     for i, row in enumerate(t.rows):
         row_content = []
-        j = 0
         obj = {}
+        lh = len(row.cells)
+        start = 1 if(lh == 4)else 0
+        j = 0
         for cell in row.cells:
             c = cell.text
             c = c.replace('\n', '')
-            if j == 0:
-                obj['name'] = c
-            if j == 1:
+            if j == start:
+                obj['name'] = c.replace('？', '').replace(
+                    '，', '').replace('。', '').replace('！', '')
+            if j == start+1:
                 obj['text'] = c
             j = j+1
         jsonlist.append(obj)
@@ -220,9 +233,11 @@ def hitMe():
             tkinter.messagebox.showinfo(title='Hi', message='请选择语音保存路径')
         else:
             # parseExcel(listPath.get(), voiceSavePath.get(), comvalue.get())
-            th = threading.Thread(target=parseExcel,args=(listPath.get(), voiceSavePath.get(), comvalue.get()))
+            th = threading.Thread(target=parseExcel, args=(
+                listPath.get(), voiceSavePath.get(), comvalue.get()))
             th.setDaemon(True)
             th.start()
+
 
 def selectListFile():
     path_ = askopenfilename()
