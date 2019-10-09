@@ -1,0 +1,6 @@
+setup.py
+smart_voice.egg-info/PKG-INFO
+smart_voice.egg-info/SOURCES.txt
+smart_voice.egg-info/dependency_links.txt
+smart_voice.egg-info/requires.txt
+smart_voice.egg-info/top_level.txt

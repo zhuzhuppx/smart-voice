@@ -1,0 +1,5 @@
+websocket-client
+requests
+python-docx
+aliyunsdkcore
+xlutils

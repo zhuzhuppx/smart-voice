@@ -1,0 +1,19 @@
+Metadata-Version: 1.1
+Name: smart-voice
+Version: 0.0.1
+Summary: smart-voice
+Home-page: https://github.com/zhuzhuppx/smart-voice.git
+Author: siyuan.zhu
+Author-email: zhusiyuanhao@163.com
+License: Apache License 2.0
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Topic :: Software Development
